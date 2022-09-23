@@ -51,12 +51,28 @@ class PrkController extends Controller
     }
 
     public function store(Request $request) {
+        $this->validate($request, [
+            'nomor_prk' => 'required|unique:tbl_prk'
+        ]);
+        // cek nomor_prk
+        $prk_existing = DB::table('tbl_prk')
+            ->where('nomor_prk', $request->nomor_prk)
+            ->first();
+        
+        if($prk_existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor PRK sudah terdaftar.'
+            ], 400);
+        }
+        
         $id = DB::table('tbl_prk')->insertGetId([
             'nomor_prk' => $request->nomor_prk,
             'nama_project' => $request->nama_project,
             'nomor_lot' => $request->nomor_lot,
             'prioritas' => $request->prioritas,
             'basket' => $request->basket,
+            'type' => $request->type,
             'is_deleted' => 0,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
