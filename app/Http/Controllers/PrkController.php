@@ -184,6 +184,7 @@ class PrkController extends Controller
                 'nama_project' => $request->nama_project,
                 'nomor_lot' => $request->nomor_lot,
                 'prioritas' => $request->prioritas,
+                'type' => $request->type,
             ]);
 
         $prk = DB::table('tbl_prk')->find($prk_id);
