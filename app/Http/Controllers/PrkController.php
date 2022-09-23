@@ -82,25 +82,56 @@ class PrkController extends Controller
             $prk_data = [];
             $row = 2;
             while ($worksheet->getCell('A'.$row)->getValue()) {
-                array_push($prk_data, [
-                    'nama_project' => $worksheet->getCell('A'.$row)->getValue(),
-                    'nomor_prk' => $worksheet->getCell('B'.$row)->getValue(),
-                    'nomor_lot' => $worksheet->getCell('C'.$row)->getValue(),
-                    'prioritas' => $worksheet->getCell('D'.$row)->getValue(),
-                    'basket' => $worksheet->getCell('E'.$row)->getValue(),
-                    'updated_at' => Carbon::now()
-                ]);
+                $type = strtolower($worksheet->getCell('E'.$row)->getValue()) == 'murni' ? 1 : 2;
+
+                DB::table('tbl_prk')->upsert([
+                        'nama_project' => $worksheet->getCell('A'.$row)->getValue(),
+                        'nomor_prk' => $worksheet->getCell('B'.$row)->getValue(),
+                        'nomor_lot' => $worksheet->getCell('C'.$row)->getValue(),
+                        'prioritas' => $worksheet->getCell('D'.$row)->getValue(),
+                        'type' => $type,
+                        'basket' => $worksheet->getCell('F'.$row)->getValue(),
+                        'updated_at' => Carbon::now()
+                    ], 
+                    ['nomor_prk'],
+                    ['nama_project', 'nomor_lot', 'prioritas', 'type', 'basket', 'updated_at']
+                );
+
+                $prk = DB::table('tbl_prk')
+                    ->where('nomor_prk', $worksheet->getCell('B'.$row)->getValue())
+                    ->first();
+
+                array_push($prk_data, $prk);
+
+                $jasa = $worksheet->getCell('G'.$row)->getValue();
+                if($jasa) {
+                    // hapus jasa existing
+                    DB::table('tbl_prk_jasa')
+                        ->where('prk_id', $prk->id)
+                        ->update([
+                            'is_deleted' => 1,
+                            'deleted_at' => Carbon::now()
+                        ]);
+                    // insert jasa
+                    $prk_jasa = DB::table('tbl_prk_jasa')
+                        ->insert([
+                            'nama_jasa' => $prk->nama_project,
+                            'harga' => preg_replace('/[^0-9]/i', '', $jasa),
+                            'is_deleted' => 0,
+                            'prk_id' => $prk->id,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now()
+                        ]);
+                }
 
                 $row++;
             }
-            DB::table('tbl_prk')->upsert(
-                $prk_data, 
-                ['nomor_prk'], 
-                ['nama_project', 'nomor_lot', 'prioritas', 'basket', 'updated_at']
-            );
 
             $this->destroyTempUpload($upload['file_path']);
-            return response()->json($prk_data);
+            return response()->json([
+                'prk_data' => $prk_data,
+                'path' => $upload['file_path']
+            ]);
         } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
             return response()->json($e->getMessage());
         }
