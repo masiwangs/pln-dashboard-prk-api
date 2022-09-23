@@ -112,6 +112,7 @@ class SkkiController extends Controller
                     continue;
                 }
 
+                $type = $worksheet->getCell('F'.$row)->getValue() ? 1 : 2;
                 // upsert skki data
                 DB::table('tbl_skki')->upsert([
                         'nomor_skki'            => $worksheet->getCell('A'.$row)->getValue(),
@@ -119,14 +120,14 @@ class SkkiController extends Controller
                         'nama_project'          => $worksheet->getCell('C'.$row)->getValue() ?? 'Untitled',
                         'nomor_wbs_jasa'        => $worksheet->getCell('D'.$row)->getValue(),
                         'nomor_wbs_material'    => $worksheet->getCell('E'.$row)->getValue(),
-                        'type'                  => $worksheet->getCell('F'.$row)->getValue(),
+                        'type'                  => $type,
                         'basket'                => $worksheet->getCell('G'.$row)->getValue(),
                         'is_deleted'            => 0,
                         'created_at'            => Carbon::now(),
                         'updated_at'            => Carbon::now()
                     ], 
                     ['nomor_prk_skki'], 
-                    ['nomor_skki', 'nama_project', 'nomor_wbs_jasa', 'nomor_wbs_material', 'basket', 'updated_at']
+                    ['nomor_skki', 'nama_project', 'nomor_wbs_jasa', 'nomor_wbs_material', 'type', 'basket', 'updated_at']
                 );
 
                 // get id
