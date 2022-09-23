@@ -13,8 +13,11 @@
 |
 */
 use Illuminate\Support\Facades\Hash;
+
+app('translator')->setLocale('id');
+
 $router->get('/', function () use ($router) {
-    return response(Hash::make('password'));
+    return app('translator')->getLocale();
 });
 $router->group(['prefix' => 'api/auth'], function() use ($router) {
     // ============= AUTH ================
