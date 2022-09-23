@@ -71,12 +71,17 @@ class SkkiController extends Controller
     }
 
     public function store(Request $request) {
+        $this->validate($request, [
+            'nomor_prk_skki' => 'required|unique:tbl_skki'
+        ]);
+
         $id = DB::table('tbl_skki')->insertGetId([
             'nomor_skki'            => $request->nomor_skki,
             'nomor_prk_skki'        => $request->nomor_prk_skki,
             'nama_project'          => $request->nama_project,
             'nomor_wbs_material'    => $request->nomor_wbs_material,
             'nomor_wbs_jasa'        => $request->nomor_wbs_jasa,
+            'type'                  => $request->type,
             'basket'                => $request->basket,
             'is_deleted'            => 0,
             'created_at'            => Carbon::now(),
@@ -114,7 +119,8 @@ class SkkiController extends Controller
                         'nama_project'          => $worksheet->getCell('C'.$row)->getValue() ?? 'Untitled',
                         'nomor_wbs_jasa'        => $worksheet->getCell('D'.$row)->getValue(),
                         'nomor_wbs_material'    => $worksheet->getCell('E'.$row)->getValue(),
-                        'basket'                => $worksheet->getCell('F'.$row)->getValue(),
+                        'type'                  => $worksheet->getCell('F'.$row)->getValue(),
+                        'basket'                => $worksheet->getCell('G'.$row)->getValue(),
                         'is_deleted'            => 0,
                         'created_at'            => Carbon::now(),
                         'updated_at'            => Carbon::now()
@@ -139,7 +145,7 @@ class SkkiController extends Controller
                     ]);
 
                 // rewrite prk data
-                $prks = explode(';', $worksheet->getCell('G'.$row)->getValue());
+                $prks = explode(';', $worksheet->getCell('H'.$row)->getValue());
                 
                 foreach ($prks as $value) {
                     // clean nomor prk
@@ -241,6 +247,7 @@ class SkkiController extends Controller
                 'nama_project'          => $request->nama_project,
                 'nomor_wbs_material'    => $request->nomor_wbs_material,
                 'nomor_wbs_jasa'        => $request->nomor_wbs_jasa,
+                'type'                  => $request->type,
             ]);
 
         $skki = DB::table('tbl_skki')->find($skki_id);
