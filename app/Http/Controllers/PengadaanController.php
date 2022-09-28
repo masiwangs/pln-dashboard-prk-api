@@ -56,6 +56,7 @@ class PengadaanController extends Controller
             'tanggal_nodin' => $request->tanggal_nodin,
             'nama_project' => $request->nama_project,
             'nomor_pr_jasa' => $request->nomor_pr_jasa,
+            'type' => $request->type,
             'basket' => $request->basket,
             'is_deleted' => 0,
             'created_at' => Carbon::now(),
@@ -109,7 +110,8 @@ class PengadaanController extends Controller
                         'nomor_pr_jasa'         => $worksheet->getCell('C'.$row)->getValue(),
                         'nama_project'          => $worksheet->getCell('D'.$row)->getValue() ?? 'Untitled',
                         'status'                => $status,
-                        'basket'                => $worksheet->getCell('F'.$row)->getValue(),
+                        'type'                  => $worksheet->getCell('F'.$row)->getValue(),
+                        'basket'                => $worksheet->getCell('G'.$row)->getValue(),
                         'is_deleted'            => 0,
                         'created_at'            => Carbon::now(),
                         'updated_at'            => Carbon::now()
@@ -134,7 +136,7 @@ class PengadaanController extends Controller
                     ]);
 
                 // rewrite skki data
-                $skkis = explode(';', $worksheet->getCell('G'.$row)->getValue());
+                $skkis = explode(';', $worksheet->getCell('H'.$row)->getValue());
                 
                 foreach ($skkis as $value) {
                     // clean nomor skki
@@ -205,13 +207,34 @@ class PengadaanController extends Controller
             ], 404);
         }
 
+        // cek apa update status
+        if($request->status) {
+            // jika status == 1, cek apa ada kontrak
+            if($request->status == 1) {
+                $kontrak = DB::table('tbl_kontrak')
+                    ->where('pengadaan_id', $pengadaan->id)
+                    ->where('is_deleted', 0)
+                    ->first();
+
+                // jika ada, lempar pesan error
+                if($kontrak) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tidak dapat diubah. Terdapat kontrak menggunakan pengadaan ini.'
+                    ], 400);
+                }
+            }
+        }
+
         $update = DB::table('tbl_pengadaan')
             ->where('id', $pengadaan->id)
             ->update([
                 'nodin' => $request->nodin,
                 'tanggal_nodin' => $request->tanggal_nodin,
                 'nama_project' => $request->nama_project,
-                'nomor_pr_jasa' => $request->nomor_pr_jasa
+                'nomor_pr_jasa' => $request->nomor_pr_jasa,
+                'status' => $request->status,
+                'type' => $request->type,
             ]);
 
         $pengadaan = DB::table('tbl_pengadaan')->find($pengadaan->id);
@@ -239,6 +262,19 @@ class PengadaanController extends Controller
                 'success' => false,
                 'message' => 'Pengadaan tidak ditemukan'
             ], 404);
+        }
+
+        // cek apa ada kontrak, kalo ada, kasih pesan error
+        $kontrak = DB::table('tbl_kontrak')
+            ->where('pengadaan_id', $pengadaan->id)
+            ->where('is_deleted', 0)
+            ->first();
+
+        if($kontrak) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak dapat dihapus. Terdapat kontrak menggunakan pengadaan ini.'
+            ], 400);
         }
 
         $update = DB::table('tbl_pengadaan')

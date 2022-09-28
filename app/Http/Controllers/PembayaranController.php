@@ -34,13 +34,7 @@ class PembayaranController extends Controller
                 ->where('is_deleted', 0)
                 ->groupBy('kontrak_id')
                 ->first();
-            $tagihan_material = DB::table('tbl_pelaksanaan_material')
-                ->select(DB::raw('sum(harga*jumlah*transaksi*-1) as total'))
-                ->where('kontrak_id', $pembayaran->id)
-                ->where('is_deleted', 0)
-                ->groupBy('kontrak_id')
-                ->first();
-            $pembayarans[$key]->tagihan = $tagihan_jasa->total + $tagihan_material->total;
+            $pembayarans[$key]->tagihan = $tagihan_jasa->total;
 
             $pembayarans[$key]->terbayar = DB::table('tbl_pembayaran')
                 ->select(DB::raw('sum(nominal) as total'))
@@ -161,13 +155,8 @@ class PembayaranController extends Controller
             ->where('is_deleted', 0)
             ->groupBy('kontrak_id')
             ->first();
-        $tagihan_material = DB::table('tbl_pelaksanaan_material')
-            ->select(DB::raw('sum(harga*jumlah*transaksi*-1) as total'))
-            ->where('kontrak_id', $kontrak->id)
-            ->where('is_deleted', 0)
-            ->groupBy('kontrak_id')
-            ->first();
-        $tagihan = $tagihan_jasa->total + $tagihan_material->total;
+        
+        $tagihan = $tagihan_jasa->total;
         $terbayar = DB::table('tbl_pembayaran')
             ->select(DB::raw('sum(nominal) as total'))
             ->where('kontrak_id', $kontrak->id)

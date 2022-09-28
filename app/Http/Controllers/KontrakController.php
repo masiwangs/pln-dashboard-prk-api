@@ -50,6 +50,15 @@ class KontrakController extends Controller
     }
 
     public function store(Request $request) {
+        // validasi pengadaan
+        $pengadaan = DB::table('tbl_pengadaan')->find($request->pengadaan_id);
+        if(!$pengadaan) {
+            return response()->json([
+                'sucess' => false,
+                'message' => 'Pengadaan tidak ditemukan'
+            ], 404);
+        }
+
         $id = DB::table('tbl_kontrak')->insertGetId([
             'nomor_kontrak'     => $request->nomor_kontrak,
             'tanggal_kontrak'   => $request->tanggal_kontrak,
@@ -57,8 +66,9 @@ class KontrakController extends Controller
             'tanggal_akhir'     => $request->tanggal_akhir,
             'pelaksana'         => $request->pelaksana,
             'direksi'           => $request->direksi,
+            'type'              => $pengadaan->type,
             'basket'            => $request->basket,
-            'pengadaan_id'      => $request->pengadaan_id,
+            'pengadaan_id'      => $pengadaan->id,
             'is_deleted'        => 0,
             'created_at'        => Carbon::now(),
             'updated_at'        => Carbon::now()
